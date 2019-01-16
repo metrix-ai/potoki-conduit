@@ -29,6 +29,7 @@ library
     potoki-core >=2.3.4 && <2.4,
     profunctors >=5.2 && <6,
     slave-thread >=1.0.3 && <2,
+    stm-chans >=3 && <3.1,
     text >=1 && <2
 
 test-suite test

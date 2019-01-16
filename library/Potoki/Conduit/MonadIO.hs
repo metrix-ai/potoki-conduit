@@ -18,15 +18,20 @@ import qualified Potoki.Core.IO as IO
     execute the whole pipeline in the base monad of the source. -}
 consumeConduit :: MonadIO m => ConduitT () o m () -> Consume.Consume o r -> m r
 consumeConduit conduit consume = do
-  elementVar <- liftIO $ newEmptyMVar
+  elementChan <- liftIO $ newTBMChanIO 100
   resultVar <- liftIO $ newEmptyMVar
   liftIO $ fork $ do
-    result <- IO.produceAndConsume (Produce.finiteMVar elementVar) consume
+    result <- IO.produceAndConsume (Produce.tbmChan elementChan) consume
     putMVar resultVar result
-  feedConduitToMVar conduit elementVar
+  feedConduitToTBMChan conduit elementChan
   liftIO $ takeMVar resultVar
 
 feedConduitToMVar :: MonadIO m => ConduitT () o m () -> MVar (Maybe o) -> m ()
 feedConduitToMVar conduit mvar = do
   runConduit $ conduit .| mapM_C (liftIO . putMVar mvar . Just)
   liftIO (putMVar mvar Nothing)
+
+feedConduitToTBMChan :: MonadIO m => ConduitT () o m () -> TBMChan o -> m ()
+feedConduitToTBMChan conduit chan = do
+  runConduit $ conduit .| mapM_C (liftIO . atomically . writeTBMChan chan)
+  liftIO $ atomically $ closeTBMChan chan

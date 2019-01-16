@@ -87,3 +87,7 @@ import Data.Profunctor.Strong as Exports
 -- slave-thread
 -------------------------
 import SlaveThread as Exports
+
+-- stm-chans
+-------------------------
+import Control.Concurrent.STM.TBMChan as Exports
